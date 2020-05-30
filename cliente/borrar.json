@@ -1,0 +1,30 @@
+ {
+    "nombre": "pelis de terror",
+    "genero_nombre": "terror",
+    "actor_nombre": "",
+    "director_nombre": ""
+}
+var respuesta:{
+    "nombre": resultado[0].nombre,
+    "genero_nombre": resultado[0].genero_id,
+    "actor_nombre": resultado[0].actor_id,
+    "director_nombre": resultado[0].director_id
+} 
+
+resultado
+[
+    {
+       "id":3,
+       "nombre":"Cual es la mejor peli con Sandra Bullock?",
+       "genero_id":null,
+       "director_id":null,
+       "actor_id":1778
+    }
+ ]
+
+ var respuesta = {
+    "nombre": resultado[0].nombre,
+    "genero_nombre": resultado[0].genero_id,
+    "actor_nombre": resultado[0].actor_id,
+    "director_nombre": resultado[0].director_id
+} 

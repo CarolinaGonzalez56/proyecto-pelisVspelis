@@ -16,12 +16,21 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 app.get('/competencias', controlador.listarCompetencias);
+app.post('/competencias', controlador.crearCompetencias);
+app.get('/generos', controlador.obtenerGeneros);
+app.get('/directores', controlador.obtenerDirectores);
+app.get('/actores', controlador.obtenerActores);
 app.get('/competencias/:id/peliculas', controlador.obtenerPelisAleatorias);
+app.get('/competencias/:id/resultados', controlador.obtenerPelisMasVotadas);
+app.post('/competencias/:idCompetencia/voto', controlador.guardarVoto);
+app.delete('/competencias/:id/votos', controlador.eliminarVoto);
 app.get('/competencias/:id', controlador.listarInformacionCompetencias);
+app.delete('/competencias/:id', controlador.eliminarCompetencias);
+app.put('/competencias/:id', controlador.modificarNombreCompetencias);
 
-//app.get('/peliculas/recomendacion', controlador.obtenerPeliculasRecomendadas);
-//app.get('/peliculas/:id', controlador.obtenerInformacionDePelicula);
-//app.get('/generos', controlador.obtenerGeneros);
+
+
+
 
 
 

@@ -103,8 +103,79 @@ DROP TABLE IF EXISTS `competencias`;
 CREATE TABLE `competencias` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `nombre` varchar(300) DEFAULT '',
+  `genero_id` INT(11),
+  `director_id` INT(11),
+  `actor_id` INT(11),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 LOCK TABLES `competencias` WRITE;
 INSERT INTO `competencias` VALUES (1, 'Cual es el mejor drama?'), (2, 'Cual es la comedia que te hizo reir mas?'), (3, 'Cual es la mejor peli con Sandra Bullock?'), (4, 'Cual es tu favorita de Almodobar?'), (5, 'Cual te hizo llorar mas?'), (6, 'Cual documental te parecio mas interesante?');
+
+DROP TABLE IF EXISTS `votos`;
+
+CREATE TABLE `votos` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `peliculas_id` int(11) unsigned NOT NULL,
+  `competencias_id` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`peliculas_id`) REFERENCES `pelicula` (`id`),
+  FOREIGN KEY (`competencias_id`) REFERENCES `competencias` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+LOCK TABLES `votos` WRITE;
+
+/*BORRAR*/
+
+SELECT * , p.id as peliculas_id_key FROM pelicula as p 
+            JOIN genero as g ON p.genero_id = g.id
+            JOIN competencias as c ON g.id = c.genero_id
+            WHERE c.genero_id=8
+            ORDER BY RAND() limit 2;
+
+delete from votos where competencias_id = 10
+ delete votos from votos inner join competencias on competencias.id=votos.competencias_id where competencias.id=10;
+ delete votos from votos inner join competencias on competencias.id=votos.competencias_id where competencias.id=11;
+
+ DELETE c FROM competencias c
+ JOIN votos v ON  v.competencias_id=c.id 
+ WHERE c.id=8;
+ DELETE FROM competencias WHERE id=8;
+
+ DELETE v FROM votos v
+ JOIN competencias c on c.id=v.competencias_id
+ WHERE c.id=11;
+ DELETE FROM competencias WHERE id=11;
+
+ DELETE FROM votos WHERE competencias_id=11;
+
+ select * from competencias 
+ left join genero on genero.id=competencias.genero_id
+ where genero.id=1778;
+
+select * from genero 
+left join competencias 
+on competencias.genero_id=genero.id
+where competencias.genero_id=8;
+
+
+
+var respuesta = {
+    "nombre": resultado[0].nombre,
+    "genero_nombre": resultado[0].genero_id,
+    "actor_nombre": resultado[0].actor_id,
+    "director_nombre": resultado[0].director_id
+} 
+
+
+select *, genero.nombre as genero_nombre, actor.nombre as actor_nombre, director.nombre as director_nombre 
+from competencias 
+left join genero 
+on genero.id=competencias.genero_id
+left join actor 
+on actor.id=competencias.actor_id
+left join director 
+on director.id=competencias.director_id
+where competencias.id=13;
+
+UPDATE 
