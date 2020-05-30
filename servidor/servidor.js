@@ -28,13 +28,6 @@ app.get('/competencias/:id', controlador.listarInformacionCompetencias);
 app.delete('/competencias/:id', controlador.eliminarCompetencias);
 app.put('/competencias/:id', controlador.modificarNombreCompetencias);
 
-
-
-
-
-
-
-
 //seteamos el puerto en el cual va a escuchar los pedidos la aplicación
 var puerto = '8080';
 
