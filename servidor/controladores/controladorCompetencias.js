@@ -7,7 +7,6 @@ function listarCompetencias(req, res) {
     
     con.query(sql, function (error, resultado) {
         //si hubo un error, se informa y se envía un mensaje de error
-        //console.log(error)
         if (error) {
             console.log("Hubo un error en la consulta", error.message);
             return res.status(404).send("Hubo un error en la consulta en listarCompetencias");
@@ -20,28 +19,62 @@ function listarCompetencias(req, res) {
     })
 }
 
-function listarInformacionCompetencias(req, res) {
-    var id = req.params.id
-    var sql = `select c.id,c.nombre, c.genero_id , c.director_id , c.actor_id, genero.nombre as genero_nombre, actor.nombre as actor_nombre, director.nombre as director_nombre 
-    from competencias as c
-    left join genero 
-    on genero.id=c.genero_id
-    left join actor 
-    on actor.id=c.actor_id
-    left join director 
-    on director.id=c.director_id
-    where c.id=${id}`
-    //console.log(sql)
+function revisarCantidadPelisPorCompetencias (req, res,next) {
+    
+    let idGenero = req.body.genero;
+    let idDirector = req.body.director;
+    let idActor = req.body.actor;
+    let sql;
+
+    if( idGenero != 0){
+        sql = `select * from pelicula as p join genero as g on p.genero_id=g.id where g.id = ${idGenero};`
+    }
+    if(idDirector != 0){
+        sql = `select * from pelicula as p join director_pelicula as dp on p.id=dp.pelicula_id join director as d on dp.director_id=d.id where d.id = ${idDirector};`
+    }
+    if(idActor != 0){
+        sql =`SELECT * FROM pelicula as p 
+        JOIN actor_pelicula as ap ON p.id = ap.pelicula_id
+        JOIN actor as a ON ap.actor_id = a.id
+        WHERE a.id= ${idActor};`
+    }
     con.query(sql, function (error, resultado) {
         //si hubo un error, se informa y se envía un mensaje de error
         if (error) {
-            console.log("Hubo un error en la consulta", error.message);
-            return res.status(404).send("Hubo un error en la consulta en listarInformacionCompetencias");
+            console.log("Hubo un error en la  hola consulta", error.message);
+            return res.status(404).send("Hubo un error en la consulta en crearCompetencias");
         }
-        console.log(resultado)
-        
+        //totalResultados.push(resultado);
+        if (resultado.length < 2 ){
+            console.log("Hay menos de 2 peliculas");
+            //let mes = prompt('Debe elegir una opcion que tenga mas de 1 pelicula');
+             return res
+            .status(422)
+            .send('La competencia que intentas crear tiene menos de 2 peliculas. No seria posible hacer una votacion 😥');
+        }else{
+            next()
+            //crearCompetencias(req, res)
+        }
+    })
+}
+
+function crearCompetencias(req, res){
+    const{ nombre, genero, director, actor } = req.body
+    
+    var sql = `insert into competencias (nombre , ${genero!=0?'genero_id':''} ${director!=0?'director_id':''} ${actor!=0?'actor_id':''})
+      values ('${nombre}', ${genero!=0?genero:''} ${director!=0?director:''} ${actor!=0?actor:''});`
+    
+    
+    con.query(sql, function (error, resultado) {
+        //si hubo un error, se informa y se envía un mensaje de error
+        if (error) {
+            console.log("Hubo un error en la  hola consulta", error.message);
+            return res.status(404).send("Hubo un error en la consulta en crearCompetencias");
+        }
         //se envía la respuesta
-        res.send(JSON.stringify(resultado[0]));
+        return res
+        .status(200)
+        .send(JSON.stringify({resultados: resultado}));
     })
 }
 
@@ -57,13 +90,10 @@ function obtenerPelisAleatorias(req, res) {
         }
         //si no hubo error, se crea el objeto respuesta con las peliculas
         let competencia = resultado;
-        //console.log(competencia)
+        
         let genero = competencia[0].genero_id;
         let actor = competencia[0].actor_id;
         let director = competencia[0].director_id;
-        // console.log(genero)
-        // console.log(actor)
-        // console.log(director)
 
         if(genero){
             sql = `SELECT *, p.id as peliculas_id_key  FROM pelicula as p 
@@ -107,40 +137,11 @@ function obtenerPelisAleatorias(req, res) {
             var respuesta = {
                 'peliculas': newResultado,
             }
-            //console.log(respuesta)
+           
             //se envía la respuesta
             res.send(JSON.stringify(respuesta));
         })
     })
-}
-
-function guardarVoto(req, res){
-    var peliVotada = req.body.idPelicula;
-    var competenciaVotada = req.params.idCompetencia;
-    console.log(peliVotada)
-    console.log(competenciaVotada)
-    
-    // 2) hacer la query para ingredar los votos 
-    if(peliVotada && competenciaVotada){
-        var sql = `insert into votos (peliculas_id, competencias_id) values (${peliVotada}, ${competenciaVotada});`
-
-    }else{
-        return res.status(404).send("La competencia o la pelicula no existe");
-    }
-    console.log(sql)
-    con.query(sql, function (error, resultado) {
-        //si hubo un error, se informa y se envía un mensaje de error
-        if (error) {
-            console.log("Hubo un error en la consulta", error.message);
-            return res.status(404).send("Hubo un error en la consulta en guardarVoto");
-        }
-        //si no hubo error, se crea el objeto respuesta con los votos obtenidos 
-        var respuesta = resultado;
-        console.log(respuesta)
-        //se envía la respuesta
-        res.status(201).send(JSON.stringify(respuesta));
-    })
-    
 }
 
 function obtenerPelisMasVotadas(req,res){
@@ -176,81 +177,78 @@ function obtenerPelisMasVotadas(req,res){
     })
 }
 
-function obtenerGeneros(req,res){
-    var sql = `SELECT * FROM genero;`
-
-    con.query(sql, function (error, resultado) {
-        //si hubo un error, se informa y se envía un mensaje de error
-        if (error) {
-            console.log("Hubo un error en la consulta", error.message);
-            return res.status(404).send("Hubo un error en la consulta en guardarVoto");
-        }
-        
-        console.log(resultado)
-        //se envía la respuesta
-        res
-        .status(200)
-        .send(JSON.stringify(resultado));
-    })
-}
-
-function obtenerDirectores(req,res){
-    var sql = `SELECT * FROM director;`
-
-    con.query(sql, function (error, resultado) {
-        //si hubo un error, se informa y se envía un mensaje de error
-        if (error) {
-            console.log("Hubo un error en la consulta", error.message);
-            return res.status(404).send("Hubo un error en la consulta en guardarVoto");
-        }
-        
-        console.log(resultado)
-        //se envía la respuesta
-        res
-        .status(200)
-        .send(JSON.stringify(resultado));
-    })
-}
-
-function obtenerActores(req,res){
-    var sql = `SELECT * FROM actor;`
-
-    con.query(sql, function (error, resultado) {
-        //si hubo un error, se informa y se envía un mensaje de error
-        if (error) {
-            console.log("Hubo un error en la consulta", error.message);
-            return res.status(404).send("Hubo un error en la consulta en guardarVoto");
-        }
-        
-        console.log(resultado)
-        //se envía la respuesta
-        res
-        .status(200)
-        .send(JSON.stringify(resultado));
-    })
-}
-
-function crearCompetencias(req,res){
-    const{ nombre, genero, director, actor } = req.body
-    console.log(req.body)
+function guardarVoto(req, res){
+    var peliVotada = req.body.idPelicula;
+    var competenciaVotada = req.params.id;
+    console.log(peliVotada)
+    console.log(competenciaVotada)
     
-    //var sql = `insert into competencias (nombre) values ('${nombre}');`
-    var sql = `insert into competencias (nombre , ${genero!=0?'genero_id':''} ${director!=0?'director_id':''} ${actor!=0?'actor_id':''})
-     values ('${nombre}', ${genero!=0?genero:''} ${director!=0?director:''} ${actor!=0?actor:''});`
-    console.log(sql)
+    // 2) hacer la query para ingredar los votos 
+    if(peliVotada && competenciaVotada){
+        var sql = `insert into votos (peliculas_id, competencias_id) values (${peliVotada}, ${competenciaVotada});`
 
+    }else{
+        return res.status(404).send("La competencia o la pelicula no existe");
+    }
+    console.log(sql)
     con.query(sql, function (error, resultado) {
         //si hubo un error, se informa y se envía un mensaje de error
         if (error) {
-            console.log("Hubo un error en la  hola consulta", error.message);
+            console.log("Hubo un error en la consulta", error.message);
             return res.status(404).send("Hubo un error en la consulta en guardarVoto");
         }
-
-        console.log(resultado)
+        //si no hubo error, se crea el objeto respuesta con los votos obtenidos 
+        var respuesta = resultado;
+        console.log(respuesta)
         //se envía la respuesta
-        res
-        .status(200)
-        .send(JSON.stringify({resultados: resultado}));
+        res.status(201).send(JSON.stringify(respuesta));
+    })
+    
+}
+
+function eliminarVotos(req, res){
+    var id = req.params.id
+    console.log(id)
+    var sql = `DELETE FROM votos WHERE competencias_id=${id};`
+    console.log(sql)
+    console.log(sql)
+    con.query(sql, function (error, resultado) {
+        //si hubo un error, se informa y se envía un mensaje de error
+        if (error) {
+            console.log("Hubo un error en la consulta eliminarVoto", error.message);
+            return res.status(404).send("Hubo un error en la consulta en eliminarVoto");
+        }
+        
+        //si no hubo error, se crea el objeto respuesta con las competencias
+        var respuesta = resultado
+        console.log(respuesta)
+        //se envía la respuesta
+        res.send(JSON.stringify(respuesta));
+    })
+
+}
+
+function listarInformacionCompetencias(req, res) {
+    var id = req.params.id
+    var sql = `select c.id,c.nombre, c.genero_id , c.director_id , c.actor_id, genero.nombre as genero_nombre, actor.nombre as actor_nombre, director.nombre as director_nombre 
+    from competencias as c
+    left join genero 
+    on genero.id=c.genero_id
+    left join actor 
+    on actor.id=c.actor_id
+    left join director 
+    on director.id=c.director_id
+    where c.id=${id}`
+    
+    con.query(sql, function (error, resultado) {
+        //si hubo un error, se informa y se envía un mensaje de error
+        if (error) {
+            console.log("Hubo un error en la consulta", error.message);
+            return res.status(404).send("Hubo un error en la consulta en listarInformacionCompetencias");
+        }
+        
+        //se envía la respuesta
+        res.send(JSON.stringify(resultado[0]));
     })
 }
 
@@ -284,28 +282,6 @@ function eliminarCompetencias(req, res){
     })
 }
 
-function eliminarVoto(req, res){
-    var id = req.params.id
-    console.log(id)
-    var sql = `DELETE FROM votos WHERE competencias_id=${id};`
-    console.log(sql)
-    console.log(sql)
-    con.query(sql, function (error, resultado) {
-        //si hubo un error, se informa y se envía un mensaje de error
-        if (error) {
-            console.log("Hubo un error en la consulta eliminarVoto", error.message);
-            return res.status(404).send("Hubo un error en la consulta en eliminarVoto");
-        }
-        
-        //si no hubo error, se crea el objeto respuesta con las competencias
-        var respuesta = resultado
-        console.log(respuesta)
-        //se envía la respuesta
-        res.send(JSON.stringify(respuesta));
-    })
-
-}
-
 function modificarNombreCompetencias(req,res){
     var id = req.params.id;
     var nombre = req.body.nombre
@@ -326,7 +302,6 @@ function modificarNombreCompetencias(req,res){
         })
 }
 
-
 module.exports = {
     listarCompetencias: listarCompetencias,
     listarInformacionCompetencias: listarInformacionCompetencias,
@@ -334,10 +309,8 @@ module.exports = {
     guardarVoto: guardarVoto,
     obtenerPelisMasVotadas: obtenerPelisMasVotadas,
     crearCompetencias: crearCompetencias,
-    obtenerGeneros: obtenerGeneros,
-    obtenerDirectores: obtenerDirectores,
-    obtenerActores: obtenerActores,
     eliminarCompetencias: eliminarCompetencias,
-    eliminarVoto: eliminarVoto,
+    eliminarVotos: eliminarVotos,
     modificarNombreCompetencias: modificarNombreCompetencias,
+    revisarCantidadPelisPorCompetencias: revisarCantidadPelisPorCompetencias,
 }
